@@ -7,8 +7,10 @@ export function normalizeSource(source: string): string {
   return source.replace(/\r\n/g, "\n").trim();
 }
 
-export function replaceGridBlock(note: string, id: string, expected: string, replacement: string): string {
-  const matches = markdown.parse(note, {}).filter(token => {
+export function replaceGridBlock(note: string, id: string, expected: string, replacement: string): { from: number; to: number; text: string } {
+  const source = note.replace(/^---[ \t]*\r?\n[\s\S]*?^(?:---|\.\.\.)[ \t]*(?=\r?$)/m, (frontmatter, offset: number) =>
+    offset === 0 ? frontmatter.replace(/[^\r\n]/g, " ") : frontmatter);
+  const matches = markdown.parse(source, {}).filter(token => {
     if (token.type !== "fence" || token.level !== 0 || token.info.trim() !== "grid" || !token.map) return false;
     try {
       const value = JSON.parse(token.content) as { id?: unknown } | null;
@@ -29,7 +31,9 @@ export function replaceGridBlock(note: string, id: string, expected: string, rep
   const newline = opening.endsWith("\r\n") ? "\r\n" : "\n";
   const indent = opening.match(/^ {0,3}/)?.[0] ?? "";
   const body = replacement.split("\n").map(line => indent + line + newline).join("");
-  return lines.slice(0, first + 1).join("") + body + lines.slice(end - 1).join("");
+  const from = lines.slice(0, first + 1).join("").length;
+  const to = from + lines.slice(first + 1, end - 1).join("").length;
+  return { from, to, text: body };
 }
 
 function isClosingFence(line: string, markup: string): boolean {

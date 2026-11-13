@@ -1,0 +1,194 @@
+.interactive-grid {
+  --ig-row-height: 3rem;
+  --ig-line: var(--background-modifier-border);
+  --ig-card-color: var(--interactive-accent);
+  margin-block: var(--size-4-4);
+}
+
+.interactive-grid .ig-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-2);
+  margin-bottom: var(--size-4-3);
+}
+
+.interactive-grid .ig-status {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  min-height: 1lh;
+}
+
+.interactive-grid .ig-scroll {
+  overflow-x: auto;
+  border: 1px solid var(--ig-line);
+  border-radius: var(--radius-m);
+}
+
+.interactive-grid .ig-layout {
+  display: grid;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  min-width: max(100%, calc(5rem + var(--ig-columns) * 10rem));
+}
+
+.interactive-grid .ig-headers {
+  grid-area: 1 / 2;
+  display: grid;
+  grid-template-columns: repeat(var(--ig-columns), minmax(0, 1fr));
+}
+
+.interactive-grid .ig-header {
+  padding: var(--size-4-2) var(--size-4-3);
+  border-inline-start: 1px solid var(--ig-line);
+  overflow-wrap: anywhere;
+}
+
+.interactive-grid .ig-header,
+.interactive-grid .ig-layout,
+.interactive-grid .ig-rows {
+  background: var(--background-secondary);
+}
+
+.interactive-grid .ig-label,
+.interactive-grid .ig-title {
+  font-weight: var(--font-semibold);
+}
+
+.interactive-grid .ig-note,
+.interactive-grid .ig-row,
+.interactive-grid .ig-details {
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  white-space: pre-wrap;
+}
+
+.interactive-grid .ig-rows {
+  grid-area: 2 / 1;
+}
+
+.interactive-grid .ig-row {
+  height: var(--ig-row-height);
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: var(--size-4-1) var(--size-4-2);
+  border-top: 1px solid var(--ig-line);
+}
+
+.interactive-grid .ig-board {
+  grid-area: 2 / 2;
+  display: grid;
+  position: relative;
+  grid-template-columns: repeat(var(--ig-columns), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--ig-rows), var(--ig-row-height));
+  background-color: var(--background-primary);
+  background-image:
+    linear-gradient(to right, var(--ig-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--ig-line) 1px, transparent 1px);
+  background-size: calc(100% / var(--ig-columns)) var(--ig-row-height);
+}
+
+.interactive-grid .ig-card {
+  margin: 2px;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  border: 1px solid var(--ig-card-color);
+  border-radius: var(--radius-s);
+  background-color: var(--background-secondary);
+  background-color: color-mix(in srgb, var(--ig-card-color) 16%, var(--background-primary));
+}
+
+.interactive-grid .ig-color-purple { --ig-card-color: var(--color-purple); }
+.interactive-grid .ig-color-orange { --ig-card-color: var(--color-orange); }
+.interactive-grid .ig-color-blue { --ig-card-color: var(--color-blue); }
+.interactive-grid .ig-color-green { --ig-card-color: var(--color-green); }
+.interactive-grid .ig-color-red { --ig-card-color: var(--color-red); }
+
+.interactive-grid button.ig-card-button,
+.interactive-grid button.ig-handle {
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+  margin: 0;
+  touch-action: none;
+  user-select: none;
+}
+
+.interactive-grid button.ig-card-button {
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: var(--text-normal);
+  text-align: start;
+  overflow: hidden;
+  padding: 6px 12px;
+  border-radius: inherit;
+  cursor: grab;
+}
+
+.interactive-grid .ig-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.interactive-grid .ig-details {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.interactive-grid button.ig-handle {
+  position: absolute;
+  padding: 0;
+  border-radius: 0;
+}
+
+.interactive-grid .ig-handle-top,
+.interactive-grid .ig-handle-bottom {
+  height: 10px;
+  left: 10px;
+  right: 10px;
+  cursor: ns-resize;
+}
+
+.interactive-grid .ig-handle-left,
+.interactive-grid .ig-handle-right {
+  width: 10px;
+  top: 10px;
+  bottom: 10px;
+  height: auto;
+  cursor: ew-resize;
+}
+
+.interactive-grid .ig-handle-top { top: 0; }
+.interactive-grid .ig-handle-right { right: 0; }
+.interactive-grid .ig-handle-bottom { bottom: 0; }
+.interactive-grid .ig-handle-left { left: 0; }
+
+.interactive-grid .ig-handle:hover,
+.interactive-grid .ig-handle:focus-visible {
+  background: var(--ig-card-color);
+}
+
+@media (pointer: coarse) {
+  .interactive-grid button.ig-handle {
+    background: color-mix(in srgb, var(--ig-card-color) 24%, transparent);
+  }
+}
+
+.interactive-grid .ig-preview {
+  z-index: 1;
+  pointer-events: none;
+  border: 2px dashed var(--interactive-accent);
+  background: var(--background-modifier-hover);
+}
+
+.interactive-grid .ig-preview.ig-invalid {
+  border-color: var(--text-error);
+}
+
+.interactive-grid-error {
+  color: var(--text-error);
+}
