@@ -8,10 +8,10 @@ export function normalizeSource(source: string): string {
 }
 
 export function replaceGridBlock(note: string, id: string, expected: string, replacement: string): { from: number; to: number; text: string } {
-  const source = note.replace(/^---[ \t]*\r?\n[\s\S]*?^(?:---|\.\.\.)[ \t]*(?=\r?$)/m, (frontmatter, offset: number) =>
-    offset === 0 ? frontmatter.replace(/[^\r\n]/g, " ") : frontmatter);
+  const source = note.replace(/(?<![\s\S])---[ \t]*\r?\n[\s\S]*?^(?:---|\.\.\.)[ \t]*(?=\r?$)/m, frontmatter =>
+    frontmatter.replace(/[^\r\n]/g, " "));
   const matches = markdown.parse(source, {}).filter(token => {
-    if (token.type !== "fence" || token.level !== 0 || token.info.trim() !== "grid" || !token.map) return false;
+    if (token.type !== "fence" || token.info.trim() !== "grid" || !token.map) return false;
     try {
       const value = JSON.parse(token.content) as { id?: unknown } | null;
       return value?.id === id;
@@ -21,7 +21,7 @@ export function replaceGridBlock(note: string, id: string, expected: string, rep
   });
   if (matches.length > 1) throw new Error("Grid IDs must be unique within a note.");
   const match = matches[0];
-  if (!match?.map || normalizeSource(match.content) !== normalizeSource(expected)) throw new Error(conflict);
+  if (match?.level !== 0 || !match.map || normalizeSource(match.content) !== normalizeSource(expected)) throw new Error(conflict);
 
   const [first, end] = match.map;
   const lines = note.match(/[^\n]*\n|[^\n]+$/g) ?? [];
