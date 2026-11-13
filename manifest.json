@@ -1,0 +1,9 @@
+{
+  "id": "interactive-grid",
+  "name": "Interactive Grid",
+  "version": "1.0.0",
+  "minAppVersion": "1.5.7",
+  "description": "Arrange and resize cards on interactive grids inside Markdown notes.",
+  "author": "Pete Bekos",
+  "isDesktopOnly": false
+}
