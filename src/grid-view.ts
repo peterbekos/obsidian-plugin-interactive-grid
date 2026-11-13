@@ -124,7 +124,7 @@ export class GridView extends MarkdownRenderChild {
     this.modal.open();
   }
 
-  private async save(next: Grid, focusId?: string): Promise<boolean> {
+  private async save(next: Grid, focusId?: string, edge?: Edge): Promise<boolean> {
     if (this.busy) return false;
     this.busy = true;
     try {
@@ -132,7 +132,11 @@ export class GridView extends MarkdownRenderChild {
       this.grid = next;
       if (this.root.isConnected) {
         this.render();
-        if (focusId) this.root.querySelector<HTMLElement>(`[data-card-id="${focusId}"]`)?.focus({ preventScroll: true });
+        if (focusId) {
+          const card = this.root.querySelector<HTMLElement>(`[data-card-id="${focusId}"]`);
+          const control = edge ? card?.parentElement?.querySelector<HTMLElement>(`.ig-handle-${edge}`) : card;
+          control?.focus({ preventScroll: true });
+        }
       }
       return true;
     } finally {
@@ -177,6 +181,11 @@ export class GridView extends MarkdownRenderChild {
     };
   }
 
+  private inside(event: PointerEvent): boolean {
+    const { row, column } = this.cellAt(event);
+    return row >= 1 && row <= this.grid.rows.length && column >= 1 && column <= this.grid.columns.length;
+  }
+
   private bindPosition(button: HTMLButtonElement, card: Card, edge?: Edge): void {
     button.addEventListener("keydown", event => {
       const delta = arrows.get(event.key);
@@ -184,7 +193,7 @@ export class GridView extends MarkdownRenderChild {
       event.preventDefault();
       event.stopPropagation();
       if (this.busy || event.repeat) return;
-      void this.commitPosition(card, adjust(card, ...delta, edge));
+      void this.commitPosition(card, adjust(card, ...delta, edge), edge);
     });
 
     button.addEventListener("pointerdown", start => {
@@ -211,7 +220,8 @@ export class GridView extends MarkdownRenderChild {
         button.dataset.dragged = "true";
         preview ??= board.createDiv({ cls: "ig-preview", attr: { "aria-hidden": "true" } });
         const candidate = candidateAt(event);
-        const error = placementError(this.grid, candidate, card.id);
+        const error = (!edge && !this.inside(event))
+          ? "The card must fit inside the grid." : placementError(this.grid, candidate, card.id);
         const row = Math.max(1, candidate.row);
         const column = Math.max(1, candidate.column);
         const rowSpan = Math.min(this.grid.rows.length + 1, candidate.row + candidate.rowSpan) - row;
@@ -232,13 +242,11 @@ export class GridView extends MarkdownRenderChild {
         preview.remove();
         this.status.empty();
         if (event.type === "pointerup") {
-          const cell = this.cellAt(event);
-          if (!edge && (cell.row < 1 || cell.row > this.grid.rows.length ||
-              cell.column < 1 || cell.column > this.grid.columns.length)) {
+          if (!edge && !this.inside(event)) {
             this.status.setText("The card must fit inside the grid.");
             return;
           }
-          void this.commitPosition(card, candidateAt(event));
+          void this.commitPosition(card, candidateAt(event), edge);
         }
       };
       button.addEventListener("pointermove", move);
@@ -248,7 +256,7 @@ export class GridView extends MarkdownRenderChild {
     });
   }
 
-  private async commitPosition(card: Card, rect: Rect): Promise<void> {
+  private async commitPosition(card: Card, rect: Rect, edge?: Edge): Promise<void> {
     const error = placementError(this.grid, rect, card.id);
     if (error) {
       this.status.setText(error);
@@ -256,6 +264,6 @@ export class GridView extends MarkdownRenderChild {
     }
     if (sameRect(card, rect)) return;
     const cards = this.grid.cards.map(item => item.id === card.id ? { ...item, ...rect } : item);
-    await this.save({ ...this.grid, cards }, card.id);
+    await this.save({ ...this.grid, cards }, card.id, edge);
   }
 }

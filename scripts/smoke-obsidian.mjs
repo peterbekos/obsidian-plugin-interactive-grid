@@ -8,6 +8,7 @@ const browser = await chromium.connectOverCDP(endpoint, { noDefaults: true, isLo
 const page = browser.contexts()[0].pages().find(tab => tab.url() === "app://obsidian.md/index.html");
 assert(page, "Could not find the Obsidian window.");
 page.setDefaultTimeout(5000);
+await page.bringToFront();
 const errors = [];
 page.on("pageerror", error => errors.push(error));
 
@@ -18,9 +19,13 @@ try {
   }, vaultPath);
 
   const trust = page.getByRole("button", { name: "Trust author and enable plugins" });
-  if (await trust.isVisible()) await trust.click();
   const settings = page.locator(".modal.mod-settings:visible .modal-close-button");
+  if (await trust.isVisible()) {
+    await trust.click();
+    await settings.waitFor();
+  }
   if (await settings.isVisible()) await settings.click();
+  await page.locator(".modal-bg:visible").waitFor({ state: "hidden" });
 
   const open = async (path, mode = "preview") => {
     await page.evaluate(async ({ path, mode }) => {
@@ -37,7 +42,7 @@ try {
     await page.waitForFunction(({ id, expected }) => {
       const card = [...document.querySelectorAll(`.ig-board [data-card-id="${id}"]`)].find(card => card.getClientRects().length);
       return card?.parentElement.style.gridArea === expected;
-    }, { id, expected: `${row} / ${column} / span ${rowSpan} / span ${columnSpan}` }, { timeout: 5000 });
+    }, { id, expected: `${row} / ${column} / span ${rowSpan} / span ${columnSpan}` }, { timeout: 5000, polling: 100 });
   };
   const saved = async (file, id, expected) => {
     for (let attempt = 0; attempt < 30; attempt++) {
@@ -88,6 +93,8 @@ try {
   await drag(edge("workshop", "right"), 0, 1, ".ig-preview:not(.ig-invalid)");
   await position("workshop", 2, 1, 2, 3);
   await position("supplies", 1, 4, 2, 1);
+  await drag(edge("workshop", "left"), 0, -1, ".ig-preview.ig-invalid");
+  await position("workshop", 2, 1, 2, 3);
 
   await open(workshop, "source");
   await page.evaluate(() => {
@@ -106,7 +113,10 @@ try {
   await page.getByRole("button", { name: "Add card" }).click();
   await page.getByLabel("Title", { exact: true }).fill("Welcome");
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.getByRole("button", { name: /^Edit or move Welcome/ }).waitFor({ timeout: 5000 });
+  const welcome = page.getByRole("button", { name: /^Edit or move Welcome/ });
+  await welcome.click();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await welcome.waitFor({ state: "hidden" });
   assert.deepEqual(errors, []);
   console.log("Obsidian smoke test passed in Reading view and Live Preview.");
 } finally {

@@ -8,8 +8,10 @@ export function normalizeSource(source: string): string {
 }
 
 export function replaceGridBlock(note: string, id: string, expected: string, replacement: string): { from: number; to: number; text: string } {
-  const source = note.replace(/(?<![\s\S])---[ \t]*\r?\n[\s\S]*?^(?:---|\.\.\.)[ \t]*(?=\r?$)/m, frontmatter =>
-    frontmatter.replace(/[^\r\n]/g, " "));
+  const frontmatter = /^---[ \t]*\r?\n[\s\S]*?^(?:---|\.\.\.)[ \t]*(?=\r?$)/m.exec(note);
+  const source = frontmatter?.index === 0
+    ? frontmatter[0].replace(/[^\r\n]/g, " ") + note.slice(frontmatter[0].length)
+    : note;
   const matches = markdown.parse(source, {}).filter(token => {
     if (token.type !== "fence" || token.info.trim() !== "grid" || !token.map) return false;
     try {
