@@ -10,10 +10,12 @@
     "lint": "eslint . --max-warnings 0",
     "test": "node --import tsx --test tests/*.test.ts",
     "check": "npm run lint && npm test && npm run build && node scripts/check-release.mjs",
-    "demo": "npm run build && node scripts/install-demo.mjs"
+    "demo": "npm run build && node scripts/install-demo.mjs",
+    "package": "npm run check && node scripts/check-release.mjs --stage",
+    "test:obsidian": "node scripts/smoke-obsidian.mjs"
   },
   "engines": {
-    "node": ">=22"
+    "node": "^22.13.0 || >=24"
   },
   "devDependencies": {
     "@types/markdown-it": "^14.2.0",
