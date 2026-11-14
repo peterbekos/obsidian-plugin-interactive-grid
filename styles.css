@@ -96,7 +96,12 @@
   border: 1px solid var(--ig-card-color);
   border-radius: var(--radius-s);
   background-color: var(--background-secondary);
-  background-color: color-mix(in srgb, var(--ig-card-color) 16%, var(--background-primary));
+}
+
+@supports (background-color: color-mix(in srgb, black, white)) {
+  .interactive-grid .ig-card {
+    background-color: color-mix(in srgb, var(--ig-card-color) 16%, var(--background-primary));
+  }
 }
 
 .ig-color-default { --ig-card-color: var(--interactive-accent); }
