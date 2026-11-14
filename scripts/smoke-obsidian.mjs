@@ -55,6 +55,7 @@ try {
     assert.fail(`Card ${id} did not persist in ${file}.`);
   };
   const drag = async (locator, rows, columns, previewClass) => {
+    await locator.evaluate(element => element.scrollIntoView({ block: "center", inline: "center", behavior: "instant" }));
     await locator.scrollIntoViewIfNeeded();
     const target = await locator.boundingBox();
     const dimensions = await board.evaluate(board => {
