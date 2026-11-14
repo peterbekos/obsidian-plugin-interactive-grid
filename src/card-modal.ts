@@ -1,5 +1,5 @@
 import { App, Modal, Setting } from "obsidian";
-import { type Card, type Color, colors, type Grid, placementError } from "./grid";
+import { type Card, colors, type Grid, placementError } from "./grid";
 
 export class CardModal extends Modal {
   constructor(
@@ -27,11 +27,22 @@ export class CardModal extends Modal {
       input.setValue(draft.details ?? "").onChange(value => { draft.details = value; });
       input.inputEl.setAttribute("aria-label", "Details");
     });
-    new Setting(form).setName("Color").addDropdown(input => {
-      for (const color of colors) input.addOption(color, color[0].toUpperCase() + color.slice(1));
-      input.setValue(draft.color).onChange(value => { draft.color = value as Color; });
-      input.selectEl.setAttribute("aria-label", "Color");
-    });
+    const palette = form.createEl("fieldset", { cls: "ig-palette" });
+    palette.createEl("legend", { text: "Color" });
+    const swatches = palette.createDiv("ig-swatches");
+    for (const color of colors) {
+      const name = color[0].toUpperCase() + color.slice(1);
+      const label = swatches.createEl("label", { cls: `ig-swatch ig-color-${color}`, title: name });
+      const input = label.createEl("input", {
+        attr: { type: "radio", name: "ig-card-color", value: color },
+      });
+      input.checked = draft.color === color;
+      input.addEventListener("change", () => {
+        if (input.checked) draft.color = color;
+      });
+      label.createSpan({ cls: "ig-swatch-chip", attr: { "aria-hidden": "true" } });
+      label.createSpan({ text: name });
+    }
     const position = [
       ["Row", "row", this.grid.rows.length],
       ["Column", "column", this.grid.columns.length],

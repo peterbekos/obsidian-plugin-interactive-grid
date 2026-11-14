@@ -107,9 +107,17 @@ try {
   await saved(workshop, "workshop", { row: 3, columnSpan: 3 });
   assert.match(await readFile(`${vaultPath}/${workshop}`, "utf8"), /^An unrelated editor change\./);
   await card("workshop").click();
+  const palette = page.getByRole("group", { name: "Color" });
+  assert.equal(await palette.getByRole("radio").count(), 9);
+  assert(await palette.getByRole("radio", { name: "Purple" }).isChecked());
+  await palette.getByRole("radio", { name: "Purple" }).press("ArrowRight");
+  assert(await palette.getByRole("radio", { name: "Magenta" }).isChecked());
+  await palette.getByText("Cyan", { exact: true }).click();
+  assert(await palette.getByRole("radio", { name: "Cyan" }).isChecked());
   await page.getByLabel("Title", { exact: true }).fill("Workshop revised");
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await saved(workshop, "workshop", { title: "Workshop revised" });
+  await saved(workshop, "workshop", { title: "Workshop revised", color: "cyan" });
+  await board.locator(".ig-card.ig-color-cyan").filter({ hasText: "Workshop revised" }).waitFor();
   await page.getByRole("button", { name: "Add card" }).click();
   await page.getByLabel("Title", { exact: true }).fill("Welcome");
   await page.getByRole("button", { name: "Save", exact: true }).click();

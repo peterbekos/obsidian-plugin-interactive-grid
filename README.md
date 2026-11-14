@@ -37,7 +37,7 @@ Paste a top-level fenced `grid` block into a note, then open Reading view or mov
 ```
 ````
 
-Use a unique grid ID per note and a unique card ID per grid. Coordinates start at 1. The row and column arrays determine the size, up to 500 rows and 50 columns. Empty row labels hide the text while retaining the row. Column notes and card details are optional plain text. Available colors are `default`, `purple`, `orange`, `blue`, `green`, and `red`.
+Use a unique grid ID per note and a unique card ID per grid. Coordinates start at 1. The row and column arrays determine the size, up to 500 rows and 50 columns. Empty row labels hide the text while retaining the row. Column notes and card details are optional plain text. The color palette includes Default (your theme accent), Red, Orange, Yellow, Green, Cyan, Blue, Purple, and Magenta. Use the lowercase name when editing the block directly.
 
 ## Arrange cards
 

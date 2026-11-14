@@ -1,4 +1,4 @@
-export const colors = ["default", "purple", "orange", "blue", "green", "red"] as const;
+export const colors = ["default", "red", "orange", "yellow", "green", "cyan", "blue", "purple", "magenta"] as const;
 export type Color = (typeof colors)[number];
 
 export interface Rect {
