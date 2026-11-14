@@ -36,6 +36,22 @@ try {
     }, { path, mode });
   };
   const board = page.locator(".ig-board:visible");
+  const convertLegacy = async (path, mode, id) => {
+    const original = await readFile(`${vaultPath}/${path}`, "utf8");
+    await page.evaluate(async path => {
+      const vault = window.app.vault;
+      await vault.process(vault.getFileByPath(path), text =>
+        text.replace("```interactive-grid\n", "```grid\n"));
+    }, path);
+    await open(path, mode);
+    assert.equal(await board.count(), 0);
+    await page.keyboard.press("Meta+p");
+    await page.locator(".prompt input").fill("Interactive Grid: Convert legacy grid blocks in current note");
+    await page.locator(".suggestion-item").filter({ hasText: "Convert legacy grid blocks in current note" }).click();
+    await board.locator(`[data-card-id="${id}"]`).waitFor();
+    await saved(path, id, {});
+    assert.equal(await readFile(`${vaultPath}/${path}`, "utf8"), original);
+  };
   const card = id => board.locator(`[data-card-id="${id}"]`);
   const edge = (id, side) => board.locator(".ig-card").filter({ has: page.locator(`[data-card-id="${id}"]`) }).locator(`.ig-handle-${side}`);
   const position = async (id, row, column, rowSpan, columnSpan) => {
@@ -47,7 +63,8 @@ try {
   const saved = async (file, id, expected) => {
     for (let attempt = 0; attempt < 30; attempt++) {
       const note = await readFile(`${vaultPath}/${file}`, "utf8");
-      const grid = JSON.parse(note.match(/```grid\n([\s\S]*?)\n```/)[1]);
+      const block = note.match(/```interactive-grid\n([\s\S]*?)\n```/);
+      const grid = block ? JSON.parse(block[1]) : { cards: [] };
       const card = grid.cards.find(card => card.id === id);
       if (card && Object.entries(expected).every(([key, value]) => card[key] === value)) return;
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -72,6 +89,7 @@ try {
   };
 
   const weekend = "Milwaukee weekend.md";
+  await convertLegacy(weekend, "preview", "brunch");
   await open(weekend);
   await position("brunch", 5, 2, 2, 1);
   await drag(card("brunch"), 1, 0, ".ig-preview:not(.ig-invalid)");
@@ -87,6 +105,7 @@ try {
   await position("brunch", 6, 2, 2, 1);
 
   const workshop = "Workshop layout.md";
+  await convertLegacy(workshop, "source", "workshop");
   await open(workshop);
   await position("workshop", 1, 1, 2, 2);
   await drag(card("workshop"), 1, 0, ".ig-preview:not(.ig-invalid)");

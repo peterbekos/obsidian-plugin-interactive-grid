@@ -1,7 +1,7 @@
 import { MarkdownView, Notice, Plugin, type TFile } from "obsidian";
 import { type Grid, parseGrid, sameRect, serializeGrid } from "./grid";
 import { GridView } from "./grid-view";
-import { normalizeSource, replaceGridBlock } from "./note";
+import { gridFence, migrateLegacyGrids, normalizeSource, replaceGridBlock } from "./note";
 
 interface UndoEntry {
   before: string;
@@ -18,7 +18,17 @@ export default class InteractiveGridPlugin extends Plugin {
         if (tracked === file || tracked.path.startsWith(file.path + "/")) this.history.delete(tracked);
       }
     }));
-    this.registerMarkdownCodeBlockProcessor("grid", (source, container, context) => {
+    this.addCommand({
+      id: "convert-legacy-blocks-in-current-note",
+      name: "Convert legacy grid blocks in current note",
+      checkCallback: checking => {
+        const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+        if (!view?.file) return false;
+        if (!checking) void this.migrate(view.file);
+        return true;
+      },
+    });
+    this.registerMarkdownCodeBlockProcessor(gridFence, (source, container, context) => {
       try {
         const grid = parseGrid(source);
         const file = this.app.vault.getFileByPath(context.sourcePath);
@@ -74,24 +84,7 @@ export default class InteractiveGridPlugin extends Plugin {
       history.delete(id);
     }
     try {
-      const views = this.app.workspace.getLeavesOfType("markdown").map(leaf => leaf.view)
-        .filter((view): view is MarkdownView => view instanceof MarkdownView && view.file === file &&
-          view.getMode() === "source");
-      const view = views[0];
-      if (view) {
-        const editor = view.editor;
-        const note = editor.getValue();
-        if (views.some(other => other.editor.getValue() !== note)) {
-          throw new Error("The open editors disagree. Close the extra editor and try again.");
-        }
-        const change = replaceGridBlock(note, id, expected, replacement);
-        editor.replaceRange(change.text, editor.offsetToPos(change.from), editor.offsetToPos(change.to));
-      } else {
-        await this.app.vault.process(file, note => {
-          const change = replaceGridBlock(note, id, expected, replacement);
-          return note.slice(0, change.from) + change.text + note.slice(change.to);
-        });
-      }
+      await this.editNote(file, note => [replaceGridBlock(note, id, expected, replacement)]);
       return true;
     } catch (error) {
       if (previous) history.set(id, previous);
@@ -102,5 +95,55 @@ export default class InteractiveGridPlugin extends Plugin {
       if (!history.size) this.history.delete(file);
       this.saving.delete(file);
     }
+  }
+
+  private async migrate(file: TFile): Promise<void> {
+    if (this.saving.has(file)) {
+      new Notice("Another grid change is saving. Try again in a moment.");
+      return;
+    }
+    this.saving.add(file);
+    try {
+      const count = await this.editNote(file, migrateLegacyGrids);
+      new Notice(count === 0 ? "No valid legacy grid blocks found in this note."
+        : count === 1 ? "Converted one legacy grid block."
+          : `Converted ${count} legacy grid blocks.`);
+    } catch (error) {
+      new Notice(error instanceof Error ? error.message : "The grid blocks could not be converted.");
+    } finally {
+      this.saving.delete(file);
+    }
+  }
+
+  private async editNote(file: TFile, getEdits: (note: string) => ReturnType<typeof migrateLegacyGrids>): Promise<number> {
+    const views = this.app.workspace.getLeavesOfType("markdown").map(leaf => leaf.view)
+      .filter((view): view is MarkdownView => view instanceof MarkdownView && view.file === file &&
+        view.getMode() === "source");
+    const view = views[0];
+    if (view) {
+      const editor = view.editor;
+      const note = editor.getValue();
+      if (views.some(other => other.editor.getValue() !== note)) {
+        throw new Error("The open editors disagree. Close the extra editor and try again.");
+      }
+      const edits = getEdits(note);
+      if (edits.length) {
+        editor.transaction({
+          changes: edits.map(({ from, to, text }) => ({
+            from: editor.offsetToPos(from), to: editor.offsetToPos(to), text,
+          })),
+        });
+      }
+      return edits.length;
+    }
+
+    let count = 0;
+    await this.app.vault.process(file, note => {
+      const edits = getEdits(note);
+      count = edits.length;
+      return edits.reduceRight((updated, { from, to, text }) =>
+        updated.slice(0, from) + text + updated.slice(to), note);
+    });
+    return count;
   }
 }

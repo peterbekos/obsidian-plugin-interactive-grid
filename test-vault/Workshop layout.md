@@ -2,7 +2,7 @@
 
 Move the Workshop down one row, then drag its right edge one column farther. The other cards should stay in place.
 
-```grid
+```interactive-grid
 {
   "id": "workshop-layout",
   "rows": [

@@ -19,8 +19,8 @@ Run `npm ci`, `npm run package`, and `npm audit --omit=dev`. Run the desktop smo
 
 ## Publish the GitHub release
 
-1. Open **Releases → Draft a new release**. Create tag `1.0.0` targeting `main` and use **Interactive Grid 1.0.0** as the title. The tag must match `manifest.json` exactly.
-2. Attach `main.js`, `manifest.json`, and `styles.css` individually from `dist/1.0.0/`. GitHub generates its own source archives.
+1. Open **Releases → Draft a new release**. Create tag `1.1.0` targeting `main` and use **Interactive Grid 1.1.0** as the title. The tag must match `manifest.json` exactly.
+2. Attach `main.js`, `manifest.json`, and `styles.css` individually from `dist/1.1.0/`. GitHub generates its own source archives.
 3. Publish as a regular release. Check that all three files appear under **Assets**. [GitHub release guide](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#creating-a-release)
 
 ## Submit to Obsidian

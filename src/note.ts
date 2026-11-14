@@ -1,4 +1,13 @@
 import MarkdownIt from "markdown-it";
+import { parseGrid } from "./grid";
+
+export const gridFence = "interactive-grid";
+
+interface NoteEdit {
+  from: number;
+  to: number;
+  text: string;
+}
 
 const markdown = new MarkdownIt("commonmark");
 const conflict = "The grid changed or could not be located. Reopen the note and try again.";
@@ -7,13 +16,42 @@ export function normalizeSource(source: string): string {
   return source.replace(/\r\n/g, "\n").trim();
 }
 
-export function replaceGridBlock(note: string, id: string, expected: string, replacement: string): { from: number; to: number; text: string } {
+function parseNote(note: string) {
   const frontmatter = /^---[ \t]*\r?\n[\s\S]*?^(?:---|\.\.\.)[ \t]*(?=\r?$)/m.exec(note);
   const source = frontmatter?.index === 0
     ? frontmatter[0].replace(/[^\r\n]/g, " ") + note.slice(frontmatter[0].length)
     : note;
-  const matches = markdown.parse(source, {}).filter(token => {
-    if (token.type !== "fence" || token.info.trim() !== "grid" || !token.map) return false;
+  return markdown.parse(source, {});
+}
+
+export function migrateLegacyGrids(note: string): NoteEdit[] {
+  const lines = note.match(/[^\n]*\n|[^\n]+$/g) ?? [];
+  const offsets: number[] = [];
+  let offset = 0;
+  for (const line of lines) {
+    offsets.push(offset);
+    offset += line.length;
+  }
+
+  const edits: NoteEdit[] = [];
+  for (const token of parseNote(note)) {
+    if (token.type !== "fence" || token.level !== 0 || token.info.trim() !== "grid" || !token.map) continue;
+    const [first, end] = token.map;
+    if (!isClosingFence(lines[end - 1] ?? "", token.markup)) continue;
+    try {
+      parseGrid(token.content);
+    } catch {
+      continue;
+    }
+    const from = offsets[first] + lines[first].indexOf("grid");
+    edits.push({ from, to: from + "grid".length, text: gridFence });
+  }
+  return edits;
+}
+
+export function replaceGridBlock(note: string, id: string, expected: string, replacement: string): NoteEdit {
+  const matches = parseNote(note).filter(token => {
+    if (token.type !== "fence" || token.info.trim() !== gridFence || !token.map) return false;
     try {
       const value = JSON.parse(token.content) as { id?: unknown } | null;
       return value?.id === id;

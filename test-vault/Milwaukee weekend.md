@@ -2,7 +2,7 @@
 
 Sample itinerary. In Reading view, drag Brunch from 10:00 to 10:15, drag its bottom edge down one row, then undo the resize. Reopen this note to check that the new start time was saved.
 
-```grid
+```interactive-grid
 {
   "id": "milwaukee-weekend",
   "rows": [

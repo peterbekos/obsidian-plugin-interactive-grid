@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { adjust, type Grid, overlaps, parseGrid, placementError, serializeGrid } from "../src/grid";
-import { replaceGridBlock } from "../src/note";
+import { migrateLegacyGrids, replaceGridBlock } from "../src/note";
 
 const grid: Grid = {
   id: "example",
@@ -14,7 +14,7 @@ const grid: Grid = {
   ],
 };
 const source = serializeGrid(grid);
-const fence = (body = source) => ["```grid", body, "```"].join("\n");
+const fence = (body = source) => ["```interactive-grid", body, "```"].join("\n");
 
 function replace(note: string, expected = source, replacement = "{}"): string {
   const change = replaceGridBlock(note, grid.id, expected, replacement);
@@ -77,15 +77,15 @@ void test("write-back ignores fenced examples and YAML frontmatter", () => {
     ["````md", fence(), "````"].join("\n"),
   ];
   const frontmatter = ["---", "value: |", fence().split("\n").map(line => "  " + line).join("\n"), "---"].join("\n");
-  const actual = ["  ~~~~grid", source.split("\n").map(line => "  " + line).join("\n"), "  ~~~~"].join("\n");
+  const actual = ["  ~~~~interactive-grid", source.split("\n").map(line => "  " + line).join("\n"), "  ~~~~"].join("\n");
   const prefix = [frontmatter, ...decoys, ""].join("\n\n");
-  assert.equal(replace(prefix + actual), prefix + "  ~~~~grid\n  {}\n  ~~~~");
+  assert.equal(replace(prefix + actual), prefix + "  ~~~~interactive-grid\n  {}\n  ~~~~");
 });
 
 void test("both demo notes are valid and the Milwaukee fixture has 15-minute rows", () => {
   for (const name of ["Milwaukee weekend", "Workshop layout"]) {
     const note = readFileSync(`test-vault/${name}.md`, "utf8");
-    const fixture = parseGrid(note.split("```grid\n")[1].split("\n```")[0]);
+    const fixture = parseGrid(note.split("```interactive-grid\n")[1].split("\n```")[0]);
     if (name === "Milwaukee weekend") {
       assert.deepEqual(fixture.columns.map(column => column.label), ["Saturday", "Sunday"]);
       assert.ok(fixture.rows.every((label, index) => Boolean(label) === (index % 4 === 0)));
@@ -99,4 +99,25 @@ void test("write-back rejects nested grids even if their source matches a top-le
   const nested = fence().split("\n").map(line => "> " + line).join("\n");
   assert.throws(() => replace(nested), /changed/);
   assert.throws(() => replace(nested + "\n\n" + fence()), /unique/);
+});
+
+void test("migration changes only validated top-level legacy fence labels", () => {
+  const legacy = fence().replace("interactive-grid", "grid");
+  const tilde = legacy.replaceAll("```", "~~~~").replaceAll("\n", "\r\n");
+  const examples = [
+    fence(),
+    fence("Foreign syntax").replace("interactive-grid", "grid"),
+    legacy.split("\n").map(line => "> " + line).join("\n"),
+    ["````markdown", legacy, "````"].join("\n"),
+    legacy.slice(0, -3),
+  ];
+  const note = [tilde, legacy, ...examples].join("\n\n");
+  const edits = migrateLegacyGrids(note);
+  assert.equal(edits.length, 2);
+  assert.ok(edits.every(({ from, to }) => note.slice(from, to) === "grid"));
+  const updated = edits.reduceRight((note, { from, to, text }) =>
+    note.slice(0, from) + text + note.slice(to), note);
+  assert.equal(updated, [tilde.replace("grid", "interactive-grid"), fence(), ...examples].join("\n\n"));
+  assert.deepEqual(migrateLegacyGrids(updated), []);
+  assert.throws(() => replace(legacy), /changed/);
 });

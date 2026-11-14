@@ -21,10 +21,10 @@ For manual installation in another vault, copy the release's `main.js`, `manifes
 
 ## Create a grid
 
-Paste a top-level fenced `grid` block into a note, then open Reading view or move the Live Preview cursor outside the block.
+Paste a top-level fenced `interactive-grid` block into a note, then open Reading view or move the Live Preview cursor outside the block.
 
 ````markdown
-```grid
+```interactive-grid
 {
   "id": "weekend",
   "rows": ["10:00", "", "10:30", ""],
@@ -49,6 +49,10 @@ Paste a top-level fenced `grid` block into a note, then open Reading view or mov
 ````
 
 Use a unique grid ID per note and a unique card ID per grid. Coordinates start at 1. The row and column arrays determine the size, up to 500 rows and 50 columns. Empty row labels hide the text while retaining the row. Column notes and card details are optional plain text. The color palette includes Default (your theme accent), Red, Orange, Yellow, Green, Cyan, Blue, Purple, and Magenta. Use the lowercase name when editing the block directly.
+
+## Upgrade grids from 1.0.0
+
+Old `grid` blocks need conversion before Interactive Grid renders them. Open an affected note and run **Interactive Grid: Convert legacy grid blocks in current note** from the command palette. The command changes the opening fence to `interactive-grid` for blocks that match the Interactive Grid format. You can also rename the fence manually in Source mode.
 
 ## Arrange cards
 
