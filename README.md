@@ -2,6 +2,8 @@
 
 Arrange an itinerary, schedule, seating chart, or storyboard inside an Obsidian note. Give rows and columns your own labels, add notes under column headings, and lay out colored cards across one or more cells. The grid lives in the note and works offline.
 
+**Upgrading from 1.0.0?** If you already made a grid, [convert its opening fence](#upgrade-grids-from-100) so it renders in 1.1.0.
+
 ![A Milwaukee weekend itinerary in light mode, with Saturday and Sunday side by side and Brunch on the Sunday schedule](screenshots/milwaukee-weekend.png)
 
 <details>
@@ -52,7 +54,9 @@ Use a unique grid ID per note and a unique card ID per grid. Coordinates start a
 
 ## Upgrade grids from 1.0.0
 
-Old `grid` blocks need conversion before Interactive Grid renders them. Open an affected note and run **Interactive Grid: Convert legacy grid blocks in current note** from the command palette. The command changes the opening fence to `interactive-grid` for blocks that match the Interactive Grid format. You can also rename the fence manually in Source mode.
+Version 1.1.0 uses the `interactive-grid` fence to avoid conflicts with other plugins. If you created grids in 1.0.0, open each affected note and run **Interactive Grid: Convert legacy grid blocks in current note** from the command palette. It changes only the opening label on valid Interactive Grid blocks in that note. Card content, colors, and positions are preserved.
+
+You can also change the opening label from `grid` to `interactive-grid` by hand in Source mode. New grids already using `interactive-grid` are ready to use.
 
 ## Arrange cards
 
