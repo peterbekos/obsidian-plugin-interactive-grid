@@ -2,6 +2,17 @@
 
 Arrange an itinerary, schedule, seating chart, or storyboard inside an Obsidian note. Give rows and columns your own labels, add notes under column headings, and lay out colored cards across one or more cells. The grid lives in the note and works offline.
 
+![A Milwaukee weekend itinerary in light mode, with Saturday and Sunday side by side and Brunch on the Sunday schedule](screenshots/milwaukee-weekend.png)
+
+<details>
+<summary>Workshop layout and card palette</summary>
+
+![A workshop layout in dark mode, with a purple card spanning two rows and two columns](screenshots/workshop-layout.png)
+
+![The card editor showing nine labeled color swatches, with Purple selected](screenshots/card-palette.png)
+
+</details>
+
 ## Try the demo
 
 Run `npm ci` and `npm run demo` from the repository. Open the `test-vault` folder as a vault in Obsidian and enable Interactive Grid under **Settings → Community plugins** if prompted. Open **Milwaukee weekend** in Reading view for the sample itinerary or **Workshop layout** for a card spanning rows and columns.
