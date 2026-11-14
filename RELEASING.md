@@ -19,10 +19,18 @@ Run `npm ci`, `npm run package`, and `npm audit --omit=dev`. Run the desktop smo
 
 ## Publish the GitHub release
 
-1. Open **Releases → Draft a new release**. Create tag `1.1.0` targeting `main` and use **Interactive Grid 1.1.0** as the title. The tag must match `manifest.json` exactly.
-2. Attach `main.js`, `manifest.json`, and `styles.css` individually from `dist/1.1.0/`. GitHub generates its own source archives.
-3. Paste the [1.1.0 release notes](CHANGELOG.md#110) into the description, with the upgrade steps first.
-4. Publish as a regular release. Check that all three files appear under **Assets**. [GitHub release guide](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#creating-a-release)
+1. Commit the matching versions in `manifest.json`, `versions.json`, `package.json`, and `package-lock.json`, along with the [release notes](CHANGELOG.md). With the release commit checked out, push `main` and then push a tag that matches the manifest version exactly.
+
+   ```sh
+   git push origin main
+   version=$(node -p 'require("./manifest.json").version')
+   git tag "$version"
+   git push origin "refs/tags/$version"
+   ```
+
+2. In GitHub **Actions**, open the successful **Build release assets** run for that tag. Download and unzip the `interactive-grid-<version>` artifact. It contains the three files built and attested by the workflow.
+3. Open **Releases → Draft a new release** and select the existing tag. Paste the release notes and attach the extracted `main.js`, `manifest.json`, and `styles.css` individually. Upload the files from the Actions run to preserve their attested hashes.
+4. Publish as a regular release and check that all three files appear under **Assets**. GitHub stores the attestations separately. You can view them under **Actions → Attestations**. [GitHub release guide](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository#creating-a-release) · [GitHub attestation guide](https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations)
 
 For an existing Community listing, publish the GitHub release and check its review in the directory dashboard. The submission steps below are for the initial listing.
 

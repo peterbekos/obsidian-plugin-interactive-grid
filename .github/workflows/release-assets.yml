@@ -1,0 +1,44 @@
+name: Build release assets
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+      - name: Verify tag matches manifest
+        run: node -e 'require("node:assert/strict").equal(process.env.GITHUB_REF_NAME, require("./manifest.json").version)'
+      - run: npm ci
+      - run: npm run package
+      - run: npm audit --omit=dev
+      - name: Attest release files
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: |
+            dist/${{ github.ref_name }}/main.js
+            dist/${{ github.ref_name }}/manifest.json
+            dist/${{ github.ref_name }}/styles.css
+      - name: Upload attested release files
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: interactive-grid-${{ github.ref_name }}
+          path: |
+            dist/${{ github.ref_name }}/main.js
+            dist/${{ github.ref_name }}/manifest.json
+            dist/${{ github.ref_name }}/styles.css
+          if-no-files-found: error
